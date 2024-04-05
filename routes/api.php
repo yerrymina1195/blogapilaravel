@@ -58,7 +58,7 @@ Route::group(['prefix' => 'category'], function () {
         Route::middleware('auth')->group(function () {
             Route::post('store', 'store');
             Route::put('update_category/{id}','update_category');
-            Route::delete('delete_article/{id}', 'delete_article');
+            Route::delete('delete_category/{id}', 'delete_article');
         });
     });
 });
