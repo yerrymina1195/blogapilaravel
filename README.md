@@ -70,8 +70,7 @@ php artisan serve
    Route::get('show/{id}', pour voir une categorie specifique en mettant l'id du categorie comme parametre);
    Route::post('store', pour creer une categorie avec comme champ title nb: auth necessaire );
    Route::delete('delete_category/{id}', en mettant l'id du categorie nb: auth necessaire );
-   Route::put('update_category/{id}', en mettant l'id du categorie et comme champ title nb: auth necessaire   );
-       
+   Route::put('update_category/{id}', en mettant l'id du categorie et comme champ title nb: auth necessaire   );       
 ```
 
 - Article : prefix-> api/article
@@ -80,8 +79,7 @@ php artisan serve
    Route::get('show/{id}', pour voir un article specifique en mettant l'id du article comme parametre);
    Route::post('store', pour creer un article avec comme champ name, content, category_Id, image(nullabe) nb: auth necessaire );
    Route::delete('delete_article/{id}', en mettant l'id de l'article nb: auth necessaire );
-   Route::put('update_article/{id}', en mettant l'id de l'article et comme champ name, content, category_Id, image(nullabe) nb: auth necessaire   );
-       
+   Route::put('update_article/{id}', en mettant l'id de l'article et comme champ name, content, category_Id, image(nullabe) nb: auth necessaire   );      
 ```
 
 - Article : prefix-> api/comment
@@ -89,6 +87,5 @@ php artisan serve
    Route::post('store',pour creer un commentaire avec comme  content, article_Id,  nb: auth necessaire );
    Route::put('update_comment/{id}',mettre à jour un commentaire  en mettant l'id du commentaire nb: auth necessaire);
    Route::delete('delete_comment/{id}', supression en mettant l'id du commentaire  nb: auth necessaire );
-
 ```
 
