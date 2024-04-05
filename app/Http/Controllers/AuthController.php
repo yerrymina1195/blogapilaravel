@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -10,143 +12,134 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AuthController extends Controller
 {
-    /**
-     * Create a new AuthController instance.
-     *
-     * @return void
-     */
-    public function __construct() {
+    public function __construct()
+    {
         $this->middleware('auth:api', ['except' => ['login', 'register', 'verifyAccount']]);
     }
-    /**
-     * Get a JWT via given credentials.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function login(Request $request){
-    	$validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
+
+    public function login(Request $request)
+    {
+        $validator = $this->validateLogin($request->all());
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
-        if (! $token = auth()->attempt($validator->validated())) {
+
+        if (!$token = auth()->attempt($validator->validated())) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+
         return $this->createNewToken($token);
     }
-    /**
-     * Register a User.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function register(Request $request) {
-        $validator = Validator::make($request->all(), [
+
+    public function register(Request $request)
+    {
+        $validator = $this->validateRegistration($request->all());
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors()->toJson(), 400);
+        }
+
+        $random = Str::random(40);
+        $url = URL::to('/verify-email/').'/' . $random;
+
+        $this->sendVerificationEmail($request->email, $url);
+
+        try {
+            User::create(array_merge(
+                $validator->validated(),
+                ['password' => bcrypt($request->password)],
+                ['tokenemail' => $random]
+            ));
+        } catch (Exception $e) {
+            return response()->json(['error' => 'User registration failed'], 500);
+        }
+
+        return response()->json([
+            'message' => 'User successfully registered. Email verification sent.',
+        ], 201);
+    }
+
+    public function verifyAccount($token)
+    {
+        try {
+            $user = User::where('tokenemail', $token)->firstOrFail();
+            
+            if ($user->isverified) {
+                return view('alreadyVerified');
+            }
+
+            $user->isverified = true;
+            $user->email_verified_at = Carbon::now();
+            $user->save();
+
+            return view('mailsuccess');
+        } catch (ModelNotFoundException $e) {
+            return view('404')->with('message', 'Sorry, your email cannot be identified.');
+        }
+    }
+
+    public function logout()
+    {
+        auth()->logout();
+        return response()->json(['message' => 'User successfully signed out']);
+    }
+
+    public function refresh()
+    {
+        return $this->createNewToken(auth()->refresh());
+    }
+
+    public function userProfile()
+    {
+        return response()->json(auth()->user());
+    }
+
+    public function updateUserProfile(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|between:2,100',
+                'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json($validator->errors()->toJson(), 400);
+            }
+
+            $user->update($validator->validated());
+
+            return response()->json($user);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Failed to update user profile'], 500);
+        }
+    }
+
+    protected function validateLogin($data)
+    {
+        return Validator::make($data, [
+            'email' => 'required|email',
+            'password' => 'required|string|min:6',
+        ]);
+    }
+
+    protected function validateRegistration($data)
+    {
+        return Validator::make($data, [
             'name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100|unique:users',
             'password' => 'required|string|confirmed|min:6',
         ]);
-        if($validator->fails()){
-            return response()->json($validator->errors()->toJson(), 400);
-        }
-        $random = Str::random(40);
-        $domain = URL::to('/');
-        $url = $domain . '/verify-email/' . $random;
-
-        $data['url'] = $url;
-        $data['email'] = $request->email;
-        $data['title'] = 'Email verification';
-        $data['body'] = "click here to verify your email";
-
-
-        Mail::send('verifyMail', ['data' => $data], function ($message) use ($data) {
-            $message->to($data['email'])->subject($data['title']);
-        });
-
-
-        $user = User::create(array_merge(
-            $validator->validated(),
-            ['password' => bcrypt($request->password)],
-            ['tokenemail' => $random],
-        ));
-
-        return response()->json([
-            'message' => 'User successfully registered and a email verification has send to ' . "{$request->email}",
-            'user' => $user
-        ], 201);
     }
 
-
-    public function verifyAccount($token)
+    protected function createNewToken($token)
     {
-        $verifyUser = User::where('tokenemail', $token)->first();
-
-
-
-        $message = 'Sorry your email cannot be identified.';
-
-        if (!is_null($verifyUser)) {
-            $user = $verifyUser;
-
-            if (!$user->isverified) {
-                $dateAndTime = Carbon::now()->format('Y-m-d H:i:s');
-                $verifyUser->isverified = 1;
-                $verifyUser->email_verified_at = $dateAndTime;
-                $verifyUser->save();
-                $message = "Your e-mail is verified. You can now login.";
-                return view('mailsuccess');
-            } else {
-                $message = "Your e-mail is already verified. You can now login.";
-                return view('alreadyVerified');
-            }
-        }
-
-        return view('404')->with('message', $message);
-        //   return redirect()->route('welcome')->with('message', $message);
-    }
-
-
-
-
-
-
-    /**
-     * Log the user out (Invalidate the token).
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function logout() {
-        auth()->logout();
-        return response()->json(['message' => 'User successfully signed out']);
-    }
-    /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function refresh() {
-        return $this->createNewToken(auth()->refresh());
-    }
-    /**
-     * Get the authenticated User.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function userProfile() {
-        return response()->json(auth()->user());
-    }
-    /**
-     * Get the token array structure.
-     *
-     * @param  string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function createNewToken($token){
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
@@ -155,48 +148,17 @@ class AuthController extends Controller
         ]);
     }
 
-
-
-    public function updateUserProfil(Request $request)
+    protected function sendVerificationEmail($email, $url)
     {
+        $data = [
+            'url' => $url,
+            'email' => $email,
+            'title' => 'Email verification',
+            'body' => 'Click here to verify your email',
+        ];
 
-
-
-        try {
-
-            $user = User::findOrFail(auth()->user()->id);
-
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|between:2,100',
-                'email' => ['required', 'email', Rule::unique('users')->ignore(auth()->user()->id)],
-            ]);
-            if ($validator->fails()) {
-                return response()->json($validator->errors()->toJson(), 400);
-            }
-
-            $data = $validator->validated();
-
-            $user->update([
-                'email' => $data['email'],
-                'name' => $data['name'],
-            ]);
-
-            return response()->json($user);
-        } catch (Exception $e) {
-            return response()->json($e);
-        }
+        Mail::send('verifyMail', ['data' => $data], function ($message) use ($data) {
+            $message->to($data['email'])->subject($data['title']);
+        });
     }
-
-
-
-
-
-    // public function logout(){
-    //     if (Auth::check()) {
-    //         Auth::user()->token()->revoke();
-    //         return response()->json(['success' =>'Successfully logged out of application'],200);
-    //     }else{
-    //         return response()->json(['error' =>'api.something_went_wrong'], 500);
-    //     }
-    // }
 }
