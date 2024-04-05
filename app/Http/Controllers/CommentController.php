@@ -10,96 +10,100 @@ use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
-    //
-
-
     public function store(Request $request)
     {
-
-
         try {
-
-            if (!Auth::check()) {
+            $user = Auth::user();
+            if (!$user) {
                 return response()->json(['error' => 'Vous devez être connecté pour commenter'], 401);
             }
 
-            $validator =   Validator::make($request->all(), [
-                'content' => 'required|string|max:255',
-                'article_Id' => 'required'
-            ], $mesages = [
-                'content.max' => 'le contenu ne doit pas depasser :max carcteres',
-                'content.required' => 'le contenu est obligatoire',
-                'article_Id.required' => 'artile non trouvé pour commenter'
-            ]);
+            $validator = $this->validateComment($request->all());
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
+
             $data = $validator->validated();
 
-            $commentaire = Comment::create([
+            $comment = Comment::create([
                 "content" => $data["content"],
-                "user_Id" => Auth::id(),
+                "user_Id" => $user->id,
                 "article_Id" => $data["article_Id"]
             ]);
 
-            return response()->json($commentaire, 200);
+            return response()->json($comment, 200);
         } catch (Exception $e) {
-            return response()->json($e);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
     public function update_comment(Request $request, $id)
     {
-        $commentaire = Comment::findOrFail($id);
-        if (!$commentaire) {
-            return response()->json(["message" => "commentaire non trouvé"], 404);
-        }
-
-        
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Vous devez être connecté pour commenter'], 401);
-        }
-
-        if ($commentaire->user_Id == Auth::id()) {
-
-            try {
-
-                $validator =   Validator::make($request->all(), [
-                    'content' => 'required|string|max:255',
-
-                ], $mesages = [
-                    'content.max' => 'le contenu ne doit pas depasser :max carcteres',
-                    'content.required' => 'le contenu est obligatoire',
-
-                ]);
-                if ($validator->fails()) {
-                    return response()->json(['errors' => $validator->errors()], 422);
-                }
-                $data = $validator->validated();
-                $commentaire->update($data);
-
-                return response()->json(["modification faite"], 201);
-            } catch (Exception $e) {
-                return response()->json($e);
+        try {
+            $comment = Comment::findOrFail($id);
+            if (!$comment) {
+                return response()->json(["message" => "Commentaire non trouvé"], 404);
             }
-        }
 
-        return response()->json(["message" => "vous n'avez l'autorisation"], 401);
+            if (!$this->canEditComment($comment)) {
+                return response()->json(["message" => "Vous n'avez pas l'autorisation"], 401);
+            }
+
+            $validator = $this->validateComment($request->all());
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $data = $validator->validated();
+            $comment->update($data);
+
+            return response()->json(["message" => "Modification faite"], 201);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function delete_comment($id)
     {
-        $commentaire = Comment::findOrFail($id);
         try {
-            if ($commentaire->user_Id == Auth::id() || $commentaire->article->user_Id == Auth::id() ) {
-                $commentaire->delete();
-
-                return response()->json(["suppresion faite avec succes"]);
+            $comment = Comment::findOrFail($id);
+            if (!$comment) {
+                return response()->json(["message" => "Commentaire non trouvé"], 404);
             }
 
-            return response()->json(["message" => "vous n'avez l'autorisation"], 401);
+            if (!$this->canDeleteComment($comment)) {
+                return response()->json(["message" => "Vous n'avez pas l'autorisation"], 401);
+            }
+
+            $comment->delete();
+
+            return response()->json(["message" => "Suppression faite avec succès"]);
         } catch (Exception $e) {
-            return response()->json($e);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    protected function validateComment($data)
+    {
+        return Validator::make($data, [
+            'content' => 'required|string|max:255',
+            'article_Id' => 'required|exists:articles,id'
+        ], [
+            'content.required' => 'Le contenu est obligatoire',
+            'content.max' => 'Le contenu ne doit pas dépasser :max caractères',
+            'article_Id.required' => 'Article non trouvé pour commenter',
+            'article_Id.exists' => 'Article non trouvé pour commenter'
+        ]);
+    }
+
+    protected function canEditComment($comment)
+    {
+        return Auth::check() && $comment->user_Id == Auth::id();
+    }
+
+    protected function canDeleteComment($comment)
+    {
+        $user = Auth::user();
+        return $user && ($comment->user_id == $user->id || $comment->article->user_Id == $user->id);
     }
 }
