@@ -1,9 +1,8 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-# Bakeli-tech
+# BlogAPILaravel
 
-Bakeli-tech est un site vitrine qui reflete les convictions et enseignement de Bakeli school of technology.<br/>
-Ce site comporte une partie  visiteur et une partie admin.
+BlogAPILaravel est une API de blog fait en laravel qui a pour fonctionalité l'authentification, la verification par email, modification de profile, CRUD de categorie, CRUD de articles, CRUD de commentaires. Et tous ces fonctionnalités ne seront possible qu'apres t'etre connecté.
 
 
 
@@ -24,7 +23,7 @@ Ce site comporte une partie  visiteur et une partie admin.
 - cloner le project avec :
 
 ```bash
-  git clone https://gitlab.com/bakelipro/bakeli-tech.git
+  git clone https://github.com/yerrymina1195/blogapilaravel
 ```
 - apres avoir ouvert le projet creer un fichier .env et y copier tout ce qui se trouve dans le fichier .env.exemple .
 
