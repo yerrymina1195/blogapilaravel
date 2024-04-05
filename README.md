@@ -15,7 +15,8 @@ BlogAPILaravel est une API de blog fait en laravel qui a pour fonctionalité l'a
 **API:**  [![My Skills](https://skillicons.dev/icons?i=laravel&&theme=light)](https://skillicons.dev)
 
 
-
+## deployment
+**cpannel:**  https://blogapilaravel.euleukcommunication.sn/api/article
 
 
 ## Installation
