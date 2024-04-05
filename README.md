@@ -52,22 +52,41 @@ php artisan key:generate
 php artisan serve 
 ```
 ## Les Routes 
-- Authentification :
+- Authentification : prefix api-> /auth
 ```bash
-Route::group([
-    'middleware' => 'api',
-    'prefix' => 'auth'
-], function () {
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::get('/user-profile', [AuthController::class, 'userProfile']);  
-    Route::post('/updateProfilUser', [AuthController::class, 'updateUserProfil']);     
-});
+
+    Route::post('/register', pour l'inscription avec name, email, password, password_confirmation);
+    Route::post('/login', pour la connection avec email, password);
+    Route::post('/logout', pour la deconnexion);
+    Route::post('/refresh', pour le refresh token);  
+    Route::post('/updateProfilUser', pour la modification du profile);     
 ```
 
+- Article : prefix api-> /category
+```bash
+   Route::get('/', pour voir tous les categories disponibles);
+   Route::get('show/{id}', pour voir une categorie specifique en mettant l'id du categorie comme parametre);
+   Route::post('store', pour creer une categorie avec comme champ title nb: auth necessaire );
+   Route::delete('delete_category/{id}', en mettant l'id du categorie nb: auth necessaire );
+   Route::put('update_category/{id}', en mettant l'id du categorie et comme champ title nb: auth necessaire   );
+       
+```
 
+- Article : prefix-> api/article
+```bash
+   Route::get('/', pour voir tous les articles disponibles);
+   Route::get('show/{id}', pour voir un article specifique en mettant l'id du article comme parametre);
+   Route::post('store', pour creer un article avec comme champ name, content, category_Id, image(nullabe) nb: auth necessaire );
+   Route::delete('delete_article/{id}', en mettant l'id de l'article nb: auth necessaire );
+   Route::put('update_article/{id}', en mettant l'id de l'article et comme champ name, content, category_Id, image(nullabe) nb: auth necessaire   );
+       
+```
 
+- Article : prefix-> api/comment
+```bash
+   Route::post('store',pour creer un commentaire avec comme  content, article_Id,  nb: auth necessaire );
+   Route::put('update_comment/{id}',mettre à jour un commentaire  en mettant l'id du commentaire nb: auth necessaire);
+   Route::delete('delete_comment/{id}', supression en mettant l'id du commentaire  nb: auth necessaire );
 
+```
 
