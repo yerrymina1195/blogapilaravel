@@ -25,7 +25,7 @@ BlogAPILaravel est une API de blog fait en laravel qui a pour fonctionalité l'a
 ```bash
   git clone https://github.com/yerrymina1195/blogapilaravel
 ```
-- apres avoir ouvert le projet creer un fichier .env et y copier tout ce qui se trouve dans le fichier .env.exemple .
+- apres avoir ouvert le projet creer un fichier .env et y copier tout ce qui se trouve dans le fichier .env.exemple car il y'a la clé jwt et les identifiants pour le mail dans ce fichier  .
 
 - installer les dépendances avec composer en Exécutant sur votre cmd ou terminal : 
 ```bash
@@ -45,7 +45,7 @@ php artisan key:generate
 ```
 - migration et seed de la base de données
 ```bash
- php artisan migrate:fresh --seed 
+ php artisan migrate:fresh
 ```
 - lancer le projet avec
 ```bash
