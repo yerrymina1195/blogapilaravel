@@ -12,7 +12,7 @@ BlogAPILaravel est une API de blog fait en laravel qui a pour fonctionalité l'a
 
 ## Tech Stack
 
-**Client:**  [![My Skills](https://skillicons.dev/icons?i=laravel&&theme=light)](https://skillicons.dev)
+**API:**  [![My Skills](https://skillicons.dev/icons?i=laravel&&theme=light)](https://skillicons.dev)
 
 
 
@@ -52,7 +52,7 @@ php artisan key:generate
 php artisan serve 
 ```
 ## Les Routes 
-- Authentification : prefix api-> /auth
+- Authentification : prefix-> api/auth
 ```bash
 
     Route::post('/register', pour l'inscription avec name, email, password, password_confirmation);
@@ -62,7 +62,7 @@ php artisan serve
     Route::post('/updateProfilUser', pour la modification du profile);     
 ```
 
-- Article : prefix api-> /category
+- Article : prefix-> api/category
 ```bash
    Route::get('/', pour voir tous les categories disponibles);
    Route::get('show/{id}', pour voir une categorie specifique en mettant l'id du categorie comme parametre);
