@@ -35,8 +35,9 @@ class ArticleController extends Controller
             if (!$user) {
                 return response()->json(['error' => 'Vous devez être connecté pour créer un article'], 401);
             }
+            $article = new Article();
 
-            $validator = $this->validateArticle($request->all());
+            $validator = $article->validateArticle($request->all());
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
@@ -107,32 +108,32 @@ class ArticleController extends Controller
         return response()->json(['message' => 'Suppression effectuée'], 200);
     }
 
-    protected function validateArticle($data, $articleId = null)
-    {
-        $rules = [
-            'name' => [
-                'required',
-                'max:50',
-                Rule::unique('articles')->ignore($articleId),
-            ],
-            'content' => 'required',
-            'category_Id' => 'required|exists:categories,id',
-            'image' => 'nullable|image|max:2048', // 2MB limit
-        ];
+    // protected function validateArticle($data, $articleId = null)
+    // {
+    //     $rules = [
+    //         'name' => [
+    //             'required',
+    //             'max:50',
+    //             Rule::unique('articles')->ignore($articleId),
+    //         ],
+    //         'content' => 'required',
+    //         'category_Id' => 'required|exists:categories,id',
+    //         'image' => 'nullable|image|max:2048', // 2MB limit
+    //     ];
 
-        $messages = [
-            'name.required' => 'Le titre est obligatoire',
-            'name.max' => 'Le titre ne doit pas dépasser :max caractères',
-            'name.unique' => 'Choisissez un autre titre, celui-ci existe déjà',
-            'content.required' => 'Le contenu est obligatoire',
-            'category_Id.required' => 'Choisissez une catégorie',
-            'category_Id.exists' => 'Cette catégorie n\'existe pas',
-            'image.image' => 'Le fichier doit être une image',
-            'image.max' => 'La taille de l\'image ne doit pas dépasser 2 Mo',
-        ];
+    //     $messages = [
+    //         'name.required' => 'Le titre est obligatoire',
+    //         'name.max' => 'Le titre ne doit pas dépasser :max caractères',
+    //         'name.unique' => 'Choisissez un autre titre, celui-ci existe déjà',
+    //         'content.required' => 'Le contenu est obligatoire',
+    //         'category_Id.required' => 'Choisissez une catégorie',
+    //         'category_Id.exists' => 'Cette catégorie n\'existe pas',
+    //         'image.image' => 'Le fichier doit être une image',
+    //         'image.max' => 'La taille de l\'image ne doit pas dépasser 2 Mo',
+    //     ];
 
-        return Validator::make($data, $rules, $messages);
-    }
+    //     return Validator::make($data, $rules, $messages);
+    // }
 
     protected function uploadImage($file)
     {
