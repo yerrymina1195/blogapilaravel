@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ArticleRequest;
 use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,31 +29,23 @@ class ArticleController extends Controller
         return response()->json($data, 200);
     }
 
-    public function store(Request $request)
+    public function store(ArticleRequest $request)
     {
         try {
             $user = Auth::user();
-            if (!$user) {
-                return response()->json(['error' => 'Vous devez être connecté pour créer un article'], 401);
-            }
-            $article = new Article();
 
-            $validator = $article->validateArticle($request->all());
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
+            $validator = $request->all();
+            // if ($validator->fails()) {
+            //     return response()->json(['errors' => $validator->errors()], 422);
+            // }
 
-            $data = $validator->validated();
+            $data = $validator;
 
             $imagePath = $this->uploadImage($request->file('image'));
 
-            $article = Article::create([
-                'image' => $imagePath,
-                'user_Id' => $user->id,
-                'name' => $data['name'],
-                'content' => $data['content'],
-                'category_Id' => $data['category_Id']
-            ]);
+            $data['user_Id']= $user->id;
+            $data['image']= $imagePath;
+            $article = Article::create($data);
 
             return response()->json($article, 200);
         } catch (\Exception $e) {
