@@ -22,7 +22,14 @@ class categoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'title' => 'required|max:50|unique:categories,title'
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'title.required' => 'A title is required for the article.',
         ];
     }
 }

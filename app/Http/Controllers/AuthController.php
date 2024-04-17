@@ -47,14 +47,14 @@ class AuthController extends Controller
         $random = Str::random(40);
         $url = URL::to('/verify-email/').'/' . $random;
 
-        $this->sendVerificationEmail($request->email, $url);
-
+        
         try {
             User::create(array_merge(
                 $validator->validated(),
                 ['password' => bcrypt($request->password)],
                 ['tokenemail' => $random]
             ));
+            $this->sendVerificationEmail($request->email, $url);
         } catch (Exception $e) {
             return response()->json(['error' => 'User registration failed'], 500);
         }

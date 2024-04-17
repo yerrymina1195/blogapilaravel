@@ -5,10 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class ArticleController extends Controller
 {
@@ -32,9 +28,6 @@ class ArticleController extends Controller
     {
         try {
             $user = Auth::user();
-            if (!$user) {
-                return response()->json(['error' => 'Vous devez être connecté pour créer un article'], 401);
-            }
             $article = new Article();
 
             $validator = $article->validateArticle($request->all());
@@ -44,17 +37,17 @@ class ArticleController extends Controller
 
             $data = $validator->validated();
 
-            $imagePath = $this->uploadImage($request->file('image'));
+            $imagePath = uploadImage($request->file('image'));
 
-            $article = Article::create([
-                'image' => $imagePath,
-                'user_Id' => $user->id,
-                'name' => $data['name'],
-                'content' => $data['content'],
-                'category_Id' => $data['category_Id']
-            ]);
+            $data['image']=$imagePath;
+            $data['user_Id']= $user->id;
+            $article = Article::create($data);
 
-            return response()->json($article, 200);
+            return response()->json([
+                'message' => 'article added successfully',
+                'success' => true,
+                'data' => $article
+            ], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -64,8 +57,9 @@ class ArticleController extends Controller
     {
         try {
             $article = Article::findOrFail($id);
+            $articleInstance = new Article();
 
-            $validator = $this->validateArticle($request->all(), $article->id);
+            $validator = $articleInstance->validateArticle($request->all(), $article->id);
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
@@ -73,8 +67,8 @@ class ArticleController extends Controller
             $data = $validator->validated();
 
             if ($request->hasFile('image')) {
-                $this->deleteImage($article->image);
-                $imagePath = $this->uploadImage($request->file('image'));
+                deleteImage($article->image);
+                $imagePath = uploadImage($request->file('image'));
                 $data['image'] = $imagePath;
             }
 
@@ -102,57 +96,9 @@ class ArticleController extends Controller
             return response()->json(['message' => 'Article non trouvé'], 404);
         }
 
-        $this->deleteImage($article->image);
+        deleteImage($article->image);
         $article->delete();
 
         return response()->json(['message' => 'Suppression effectuée'], 200);
-    }
-
-    // protected function validateArticle($data, $articleId = null)
-    // {
-    //     $rules = [
-    //         'name' => [
-    //             'required',
-    //             'max:50',
-    //             Rule::unique('articles')->ignore($articleId),
-    //         ],
-    //         'content' => 'required',
-    //         'category_Id' => 'required|exists:categories,id',
-    //         'image' => 'nullable|image|max:2048', // 2MB limit
-    //     ];
-
-    //     $messages = [
-    //         'name.required' => 'Le titre est obligatoire',
-    //         'name.max' => 'Le titre ne doit pas dépasser :max caractères',
-    //         'name.unique' => 'Choisissez un autre titre, celui-ci existe déjà',
-    //         'content.required' => 'Le contenu est obligatoire',
-    //         'category_Id.required' => 'Choisissez une catégorie',
-    //         'category_Id.exists' => 'Cette catégorie n\'existe pas',
-    //         'image.image' => 'Le fichier doit être une image',
-    //         'image.max' => 'La taille de l\'image ne doit pas dépasser 2 Mo',
-    //     ];
-
-    //     return Validator::make($data, $rules, $messages);
-    // }
-
-    protected function uploadImage($file)
-    {
-        if (!$file) {
-            return null;
-        }
-
-        $fileName = $file->getClientOriginalName();
-        $filePath = 'articles/' . $fileName;
-
-        Storage::disk('public')->putFileAs('articles', $file, $fileName);
-
-        return $filePath;
-    }
-
-    protected function deleteImage($path)
-    {
-        if ($path) {
-            Storage::disk('public')->delete($path);
-        }
     }
 }
