@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\Tag;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,7 +19,7 @@ class ArticleController extends Controller
 
         $data = Article::query()
             ->where('name', 'like', "%{$search}%")
-            ->with(['user', 'comments'])
+            ->with(['user', 'comments', 'tags'])
             ->orderBy($sortField, $sortDirection)
             ->paginate($perPage);
 
@@ -39,16 +41,19 @@ class ArticleController extends Controller
 
             $imagePath = uploadImage($request->file('image'));
 
-            $data['image']=$imagePath;
-            $data['user_Id']= $user->id;
+            $data['image'] = $imagePath;
+            $data['user_Id'] = $user->id;
             $article = Article::create($data);
+
+            $tag = Tag::find($request->input('tag_id'));
+            $article->tags()->attach($tag);
 
             return response()->json([
                 'message' => 'article added successfully',
                 'success' => true,
                 'data' => $article
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -75,7 +80,7 @@ class ArticleController extends Controller
             $article->update($data);
 
             return response()->json(['data' => $article, 'message' => 'Modification faite'], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -100,5 +105,30 @@ class ArticleController extends Controller
         $article->delete();
 
         return response()->json(['message' => 'Suppression effectuée'], 200);
+    }
+
+
+    public function attacheTag(Request $request)
+    {
+        try {
+
+            $article = Article::find($request->input('article_id'));
+            if (!$article) {
+                return response()->json(['message' => 'Article non trouvé'], 404);
+            }
+            $tag = Tag::find($request->input('tag_id'));
+            if (!$tag) {
+                return response()->json(['message' => 'Tag non trouvé'], 404);
+            }
+            $article->tags()->attach($tag);
+
+            return response()->json([
+                'message' => 'tag ajouter avec success',
+                'success' => true,
+                'data' => $article
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

@@ -4,6 +4,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategorieController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\TagController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,8 +32,8 @@ Route::group([
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::get('/user-profile', [AuthController::class, 'userProfile']);  
-    Route::post('/updateProfilUser', [AuthController::class, 'updateUserProfil']);     
+    Route::get('/user-profile', [AuthController::class, 'userProfile']);
+    Route::post('/updateProfilUser', [AuthController::class, 'updateUserProfil']);
 });
 
 
@@ -46,6 +47,7 @@ Route::group(['prefix' => 'article'], function () {
             Route::post('store', 'store');
             Route::delete('delete_article/{id}', 'delete_article');
             Route::put('update_article/{id}', 'update_article');
+            Route::post('attacheTag', 'attacheTag');
         });
     });
 });
@@ -57,28 +59,39 @@ Route::group(['prefix' => 'category'], function () {
         Route::get('show/{id}', 'show');
         Route::middleware('auth')->group(function () {
             Route::post('store', 'store');
-            Route::put('update_category/{id}','update_category');
+            Route::put('update_category/{id}', 'update_category');
             Route::delete('delete_category/{id}', 'delete_article');
         });
     });
 });
 
 
-Route::group(['prefix'=>'comment'],function(){
+Route::group(['prefix' => 'comment'], function () {
 
-    Route::controller(CommentController::class)->group(function(){
-        Route::get('/','index');
+    Route::controller(CommentController::class)->group(function () {
+        Route::get('/', 'index');
         Route::get('show/{id}', 'show');
-        
+
         Route::middleware('auth')->group(function () {
-            Route::post('store','store');
-            Route::put('update_comment/{id}','update_comment');
-            Route::delete('delete_comment/{id}','delete_comment');
+            Route::post('store', 'store');
+            Route::put('update_comment/{id}', 'update_comment');
+            Route::delete('delete_comment/{id}', 'delete_comment');
         });
     });
 });
 
 
+Route::group(['prefix' => 'tag'], function () {
+    Route::controller(TagController::class)->group(function () {
+
+        Route::middleware('auth')->group(function () {
+            Route::post('store', 'store');
+            Route::delete('delete/{id}', 'delete');
+            Route::get('show/{id}', 'show');
+            Route::put('update/{id}', 'update');
+        });
+    });
+});
 
 
 // Route::group(['prefix'=>'category'],function($router){
