@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Notifications\UserNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -49,12 +50,13 @@ class AuthController extends Controller
 
         
         try {
-            User::create(array_merge(
+          $user=  User::create(array_merge(
                 $validator->validated(),
                 ['password' => bcrypt($request->password)],
                 ['tokenemail' => $random]
             ));
-            $this->sendVerificationEmail($request->email, $url);
+            $user->notify(new UserNotification($url));
+            // $this->sendVerificationEmail($request->email, $url);
         } catch (Exception $e) {
             return response()->json(['error' => 'User registration failed'], 500);
         }
